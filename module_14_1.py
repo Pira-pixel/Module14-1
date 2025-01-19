@@ -4,7 +4,7 @@ import sqlite3
 connection = sqlite3.connect('not_telegram.db')
 cursor = connection.cursor()
 
-# Создание таблицы Users
+# Создание таблицы Users, если она не существует
 cursor.execute('''
 CREATE TABLE IF NOT EXISTS Users(
     id INTEGER PRIMARY KEY,
@@ -15,35 +15,29 @@ CREATE TABLE IF NOT EXISTS Users(
 )
 ''')
 
-# Заполнение таблицы 10 записями
-users_data = [
-    ('User 1', 'example1@gmail.com', 10, 1000),
-    ('User 2', 'example2@gmail.com', 20, 1000),
-    ('User 3', 'example3@gmail.com', 30, 1000),
-    ('User 4', 'example4@gmail.com', 40, 1000),
-    ('User 5', 'example5@gmail.com', 50, 1000),
-    ('User 6', 'example6@gmail.com', 60, 1000),
-    ('User 7', 'example7@gmail.com', 70, 1000),
-    ('User 8', 'example8@gmail.com', 80, 1000),
-    ('User 9', 'example9@gmail.com', 90, 1000),
-    ('User 10', 'example10@gmail.com', 100, 1000)
-]
+# Удаление всех записей из таблицы Users
+cursor.execute('DELETE FROM Users')
 
-cursor.executemany('INSERT INTO Users (username, email, age, balance) VALUES (?, ?, ?, ?)', users_data)
+# Заполнение таблицы 10 записями
+for i in range(10):
+    cursor.execute('INSERT INTO Users (username, email, age, balance) VALUES (?, ?, ?, ?)',
+                   (f'User {i + 1}', f'example{i + 1}@gmail.com', (i + 1) * 10, 1000))
 
 # Обновление balance у каждой 2-й записи начиная с 1-й на 500
-cursor.execute('UPDATE Users SET balance = ? WHERE id%2 != ?', (500, 0))
+for i in range(1, 11, 2):
+    cursor.execute('UPDATE Users SET balance = ? WHERE username = ?', (500, f'User {i}'))
 
 # Удаление каждой 3-й записи в таблице начиная с 1-й
-cursor.execute("DELETE FROM Users WHERE id in (1, 4, 7, 10) != ?", (0,))
+for i in range(1, 11, 3):
+    cursor.execute('DELETE FROM Users WHERE username = ?', (f'User {i}',))
 
 # Выборка всех записей, где возраст не равен 60
-cursor.execute("SELECT username, email, age, balance FROM Users WHERE age != ?", (60,))
-results = cursor.fetchall()
+cursor.execute('SELECT * FROM Users WHERE age != 60')
+result = cursor.fetchall()
 
 # Вывод результатов в консоль
-for username, email, age, balance in results:
-    print(f'Имя: {username} | Почта: {email} | Возраст: {age} | Баланс: {balance}')
+for user in result:
+    print(f'Имя: {user[1]} | Почта: {user[2]} | Возраст: {user[3]} | Баланс: {user[4]}')
 
 # Сохранение изменений и закрытие соединения
 connection.commit()
